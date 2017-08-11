@@ -8,6 +8,7 @@ notify:
 dependencies:
   override:
     - npm install jsdoc -g
+    - npm install --dev
 compile:
   override:
     - npm run gen-docs
