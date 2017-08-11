@@ -1,0 +1,22 @@
+machine:
+  timezone:
+    America/Los_Angeles
+notify:
+  webhooks:
+    # A list of hook hashes, containing the URL field
+    - url: http://104.172.86.204:8080/hooks/circle
+dependencies:
+  override:
+    - npm install jsdoc -g
+compile:
+  override:
+    - npm run gen-docs
+deployment:
+  production:
+    branch: master
+    commands:
+      - ssh-keygen -q -N "" -f ~/.ssh/google_compute_engine
+      - sudo rm -r node_modules
+      - sudo /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file gcloud-service-key.json
+      - sudo /opt/google-cloud-sdk/bin/gcloud config set project disnode-main
+      - cd build && sudo /opt/google-cloud-sdk/bin/gcloud compute copy-files ./docs/build disnode-platform-01:/var/www/lite --zone us-central1-a
