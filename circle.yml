@@ -8,7 +8,7 @@ notify:
 dependencies:
   override:
     - npm install jsdoc -g
-    - npm install --dev
+    - npm install docdash
 compile:
   override:
     - npm run gen-docs
