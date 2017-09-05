@@ -1,14 +1,16 @@
 const Logger = require('disnode-logger');
 
-const codes     = require("./api/codes");
-const requests  = require('./api/request')
-const APIUtil   = require("./api/apiutils");
+const codes     = require("./src/codes");
+const requests  = require('./src/request')
+const APIUtil   = require("./src/apiutils");
 
 const axios     = require('axios');
 const WebSocket = require('ws');
 
 const async        = require('async');
 const EventEmitter = require('events').EventEmitter;
+
+const CaliDB       = require('cali-db');
 
 /**
  * Class to ineract with Discord
@@ -26,21 +28,29 @@ const EventEmitter = require('events').EventEmitter;
 class Bot extends EventEmitter {
   constructor(config) {
     super();
+
+    if(config.enableLogs == false){
+      Logger.DisableLogs();
+    }
+
     if(!config.key){
       Logger.Error("DisnodeLite-Bot", "constructor", "No Key was Provided in your config. Plz fix that.");
       return;
     }
+    
+
+    this.guilds = new CaliDB({path:"./calidb/guilds/"});
+    this.channels = new CaliDB({path:"./calidb/channels/"});
+    this.members = new CaliDB({path:"./calidb/members/"});
+    
     this.key = config.key;
     this.botInfo = {};
     this.shardID = 0;
     this.lastS = null;
-    this.guilds = {
-    };
-    this.channels = {
-    };
-    this.users = {
-    };
+
     this.setMaxListeners(1000);
+
+   
   }
 
   /**
@@ -368,25 +378,21 @@ class Bot extends EventEmitter {
   }
 
   CacheGuild(data) {
-    this.guilds[data.id] = data;
-    if (data.channels) {
-      for (var i = 0; i < data.channels.length; i++) {
-        data.channels[i].guild_id = data.id;
 
-        this.channels[data.channels[i].id] = data.channels[i];
-      }
-    }
-    if (data.members) {
-      var mem = this.guilds[data.id].members
+    this.guilds.Set(data.id, data);
 
-      var rawUsers = [];
-      for (var i = 0; mem.length; i++) {
-        if (mem[i] == null) {
-          return;
-        }
-        this.users[mem[i].user.id] = mem[i].user;
-      }
+    if(data.channels){
+      data.channels.forEach(function(element) {
+        this.channels.Set(element.id, element);
+      }, this);
     }
+
+    if(data.members){
+      data.members.forEach(function(element) {
+        //this.members.Set(element.id, element);
+      }, this);
+    }
+
 
 
   }
@@ -1721,8 +1727,8 @@ class Bot extends EventEmitter {
   GetGuildIDFromChannel(channelID) {
     var self = this;
     var _server = "DM";
-    if (self.channels[channelID]) {
-      _server = self.channels[channelID].guild_id;
+    if (self.channels.Get(channelID)) {
+      _server = self.channels.Get(channelID).guild_id;
     }
     return _server;
   }
