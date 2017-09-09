@@ -4,9 +4,8 @@ var shardID = 0;
 var maxShards = 1;
 if(process.env.INSTID){
   console.log("Found PM2 Instancing");
-  var pm2conf = require("./pm2.config");
   shardID = process.env.INSTID;
-  maxShards = pm2conf.apps[0].instances;
+  maxShards = process.env.instances;
 }
 console.log("Sid: " + shardID + " mx: " + maxShards);
 
