@@ -39,12 +39,12 @@ class Bot extends EventEmitter {
       Logger.Error("DisnodeLite-Bot", "constructor", "No Key was Provided in your config. Plz fix that.");
       return;
     }
-    
+
     this.cache = new Caching()
     this.guilds   = this.cache.guilds.GetArray();
     this.channels = this.cache.channels.GetArray();
     this.members  = this.cache.members.GetArray();
-    
+
     this.key = config.key;
     this.botInfo = {};
     this.shardID = 0;
@@ -321,7 +321,7 @@ class Bot extends EventEmitter {
       case codes.dispatch.MESSAGE_CREATE:
         var data = data.d;
         data.guildID = self.GetGuildIDFromChannel(data.channel_id);
-        self.emit("message", data);
+        self.emit("message", data.channel_id, data.author.user, data.author.userID, data.content, data.content.split(" "), data);
         break;
 
         /**
