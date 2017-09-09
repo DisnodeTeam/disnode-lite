@@ -25,20 +25,20 @@ bot.on("ready", ()=>{
   console.log("Ready!");
 })
 
-bot.on("message", (event, channelID, user, userID, message, params)=>{
-  if(data.content.includes("*cache-guilds")){
-    var params = data.content.toString().split(" ");
+    var params = message.toString().split(" ");
+  if(message.includes("*cache-guilds")){
+bot.on("message",({message, channelID})=>{
 
     if(params[1]){
-      bot.SendMessage(data.channel_id, "Cached Guild: " + bot.guilds.Get(params[1]).name)
+      bot.SendMessage(channelID, "Cached Guild: " + bot.guilds.Get(params[1]).name)
     }else{
-      bot.SendMessage(data.channel_id, "Cached Guilds: " + bot.guilds.length)
+      bot.SendMessage(channelID, "Cached Guilds: " + bot.guilds.length)
     }
    
   }
 
   if(data.content.includes("*cache-channel")){
-    bot.SendMessage(data.channel_id, "Cached Channels: " + bot.channels.GetArray().length)
+    bot.SendMessage(channelID, "Cached Channels: " + bot.channels.GetArray().length)
   }
 })
 

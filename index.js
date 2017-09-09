@@ -321,7 +321,15 @@ class Bot extends EventEmitter {
       case codes.dispatch.MESSAGE_CREATE:
         var data = data.d;
         data.guildID = self.GetGuildIDFromChannel(data.channel_id);
-        self.emit("message", data, data.channel_id, data.author.user, data.author.userID, data.content, data.content.split(" "));
+        var msgObject = {
+          message: data.content,
+          content: data.content,
+          channelID: data.channel_id,
+          user: data.author.user,
+          userID: data.author.userID,
+          raw: data
+        }
+        self.emit("message", msgObject);
         break;
 
         /**
