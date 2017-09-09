@@ -25,9 +25,9 @@ bot.on("ready", ()=>{
   console.log("Ready!");
 })
 
-    var params = message.toString().split(" ");
-  if(message.includes("*cache-guilds")){
 bot.on("message",({message, channelID})=>{
+  if(message.includes("*cache-guilds")){
+    var params = message.toString().split(" ");
 
     if(params[1]){
       bot.SendMessage(channelID, "Cached Guild: " + bot.guilds.Get(params[1]).name)
