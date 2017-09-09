@@ -1,3 +1,5 @@
+
+
 /**
  * The complete Triforce, or one or more components of the Triforce.
  * @typedef {Object} MessageDeleteObject
