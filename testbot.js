@@ -25,7 +25,7 @@ bot.on("ready", ()=>{
   console.log("Ready!");
 })
 
-bot.on("message", (data)=>{
+bot.on("message", (channelID, user, userID, message, params, event)=>{
   if(data.content.includes("*cache-guilds")){
     var params = data.content.toString().split(" ");
 
