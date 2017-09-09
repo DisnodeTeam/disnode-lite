@@ -20,6 +20,7 @@ const CaliDB       = require('cali-db');
  * @property {BotInfoObject} botInfo - Information about the bot
  * @property {Disnode} disnode - Disnode Refrence
  * @property {string} shardID - Bot's Shard ID
+ * @property {string} totalShards - Total number of shards
  * @property {string} lastS - Last 's' sent in a WS Packet (internal use mostly)
  * @property {Object<GuildObject>} guilds - The Guilds the bot belonds to. Object so access via `this.disnode.bot.guilds[guildID]`
  * @property {Object<ChannelObject>} channels - All the channels. Object so access via `this.disnode.bot.channels[channelID]`
@@ -46,11 +47,13 @@ class Bot extends EventEmitter {
     this.key = config.key;
     this.botInfo = {};
     this.shardID = 0;
+    this.totalShards = 1;
     this.lastS = null;
-
+    if(config.sharding != undefined){
+      this.shardID = config.sharding[0];
+      this.totalShards = config.sharding[1];
+    }
     this.setMaxListeners(1000);
-
-   
   }
 
   /**
@@ -91,7 +94,7 @@ class Bot extends EventEmitter {
   WSIdentify() {
     var self = this;
     Logger.Info("DisnodeLite-Bot", "wsIdentify", "Sending ID to Gateway");
-    var packet = requests.identify(this.key);
+    var packet = requests.identify(this.key, this.shardID, this.totalShards);
     self.ws.send(JSON.stringify(packet));
   }
 

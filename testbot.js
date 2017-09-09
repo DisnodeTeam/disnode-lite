@@ -1,6 +1,16 @@
 var DisnodeLite = require("./index.js");
 
-var bot = new DisnodeLite({key: "MjYzMzMwMzY5NDA5OTA4NzM2.DHitPg.8IoxMGTSiOUmsbq8-v0fIwrvZ_8"});
+var shardID = 0;
+var maxShards = 1;
+if(process.env.INSTID){
+  console.log("Found PM2 Instancing");
+  var pm2conf = require("./pm2.config");
+  shardID = process.env.INSTID;
+  maxShards = pm2conf.apps[0].instances;
+}
+console.log("Sid: " + shardID + " mx: " + maxShards);
+
+var bot = new DisnodeLite({key: "MjYzMzMwMzY5NDA5OTA4NzM2.DHitPg.8IoxMGTSiOUmsbq8-v0fIwrvZ_8", sharding: [shardID,maxShards]});
 
 var arrayTest = ["test", "test2", "test3"]
 
