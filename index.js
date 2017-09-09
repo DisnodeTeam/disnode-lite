@@ -317,21 +317,22 @@ class Bot extends EventEmitter {
         self.emit("guild_update", data.d);
         self.cache.CacheGuildUpdate(data.d);
         break;
-        /**
-         * Message Create event.
+        /** 
+         * Message Event, Called when your bot recieves a message
          * @event Bot#message
          * @type {object}
-         * @property {MessageObject} Data - Indicates whether the snowball is tightly packed.
+         * @property {MessageObject} Data - Message Recieved
          */
       case codes.dispatch.MESSAGE_CREATE:
         var data = data.d;
-        data.guildID = self.GetGuildIDFromChannel(data.channel_id);
         var msgObject = {
+          id: data.id,
           message: data.content,
           content: data.content,
-          channelID: data.channel_id,
           user: data.author.user,
           userID: data.author.userID,
+          channelID: data.channel_id,
+          guildID: self.GetGuildIDFromChannel(data.channel_id),
           raw: data
         }
         self.emit("message", msgObject);
