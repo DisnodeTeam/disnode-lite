@@ -3,6 +3,8 @@ const Logger = require('disnode-logger');
 const codes     = require("./src/codes");
 const requests  = require('./src/request')
 const APIUtil   = require("./src/apiutils");
+const Caching    = require ("./src/caching");
+
 
 const axios     = require('axios');
 const WebSocket = require('ws');
@@ -10,7 +12,6 @@ const WebSocket = require('ws');
 const async        = require('async');
 const EventEmitter = require('events').EventEmitter;
 
-const CaliDB       = require('cali-db');
 
 /**
  * Class to ineract with Discord
@@ -39,10 +40,10 @@ class Bot extends EventEmitter {
       return;
     }
     
-
-    this.guilds = new CaliDB({path:"./calidb/guilds/"});
-    this.channels = new CaliDB({path:"./calidb/channels/"});
-    this.members = new CaliDB({path:"./calidb/members/"});
+    this.cache = new Caching()
+    this.guilds   = this.cache.guilds.GetArray();
+    this.channels = this.cache.channels.GetArray();
+    this.members  = this.cache.members.GetArray();
     
     this.key = config.key;
     this.botInfo = {};
@@ -220,7 +221,7 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.GUILD_CREATE:
         self.emit('guild_create', data.d);
-        self.CacheGuild(data.d);
+        self.cache.CacheGuildAdd(data.d);
         break;
         /**
          * Message Delete event.
@@ -230,6 +231,7 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.GUILD_DELETE:
         self.emit("guild_delete", data.d);
+        self.cache.CacheGuildDelete(data.d);
         break;
         /**
          * Message Delete event.
@@ -248,7 +250,8 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.GUILD_MEMBER_ADD:
         self.emit("guild_memeber_add", data.d);
-        self.CacheGuild(data.d);
+        self.cache.CacheGuildMemberAdd(data.d);
+
         break;
         /**
          * Message Delete event.
@@ -258,7 +261,7 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.GUILD_MEMBER_REMOVE:
         self.emit("guild_memeber_removed", data.d);
-        self.CacheGuild(data.d);
+        self.cache.CacheGuildMemberRemoved(data.d);
         break;
         /**
          * Message Delete event.
@@ -295,7 +298,7 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.GUILD_UPDATE:
         self.emit("guild_update", data.d);
-        self.CacheGuild(data.d);
+        self.cache.CacheGuildUpdate(data.d);
         break;
         /**
          * Message Create event.
