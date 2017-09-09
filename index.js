@@ -409,26 +409,6 @@ class Bot extends EventEmitter {
     }
   }
 
-  CacheGuild(data) {
-
-    this.guilds.Set(data.id, data);
-
-    if(data.channels){
-      data.channels.forEach(function(element) {
-        this.channels.Set(element.id, element);
-      }, this);
-    }
-
-    if(data.members){
-      data.members.forEach(function(element) {
-        //this.members.Set(element.id, element);
-      }, this);
-    }
-
-
-
-  }
-
   CacheBotUser() {
     var self = this;
     Logger.Info("DisnodeLite-Bot", "GetCacheInfo", "Caching Bot Info.");
