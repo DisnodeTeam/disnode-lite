@@ -66,8 +66,11 @@ class Cache {
         var self = this;
 
         if(!channel){return;}
+
         if(this.mode !="mem"){return;}
-        if(channel == typeof(Array)){
+
+        if(Array.isArray(channel)){
+            
             channel.forEach(function(element) {
                 self.channels.push(element);
             }, this);

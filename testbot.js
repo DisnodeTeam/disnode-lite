@@ -9,7 +9,7 @@ if(process.env.INSTID){
 }
 console.log("Sid: " + shardID + " mx: " + maxShards);
 
-var bot = new DisnodeLite({key: "", sharding: [shardID,maxShards]});
+var bot = new DisnodeLite({key: "MTcwMDIwODA3MTk4NjM4MDgw.DJTz2A.ToOIcdKzopRKZq8zCDJHyd_y5ak", sharding: [shardID,maxShards]});
 
 var arrayTest = ["test", "test2", "test3"]
 
@@ -26,13 +26,13 @@ bot.on("message", (channelID, user, userID, message, params, event)=>{
     if(params[1]){
       bot.SendMessage(data.channel_id, "Cached Guild: " + bot.guilds.Get(params[1]).name)
     }else{
-      bot.SendMessage(data.channel_id, "Cached Guilds: " + bot.guilds.GetArray().length)
+      bot.SendMessage(data.channel_id, "Cached Guilds: " + bot.guilds.length)
     }
    
   }
 
   if(data.content.includes("*cache-channel")){
-    bot.SendMessage(data.channel_id, "Cached Channels: " + bot.channels.GetArray().length)
+    bot.SendMessage(data.channel_id, "Cached Channels: " + bot.channels.length)
   }
 })
 
