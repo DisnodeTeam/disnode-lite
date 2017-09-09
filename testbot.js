@@ -13,11 +13,11 @@ var bot = new DisnodeLite({
   key: "", 
   sharding: [shardID,maxShards],
   cacheSettings: {
-    cacheChannels: false,
+    cacheChannels: true,
+    cacheMembers: true
   }
 });
 
-var arrayTest = ["test", "test2", "test3"]
 
 bot.Connect();
 
@@ -26,20 +26,34 @@ bot.on("ready", ()=>{
 })
 
 bot.on("message",({message, channelID})=>{
+  var params = message.toString().split(" ");
   if(message.includes("*cache-guilds")){
-    var params = message.toString().split(" ");
+    
 
     if(params[1]){
-      bot.SendMessage(channelID, "Cached Guild: " + bot.guilds.Get(params[1]).name)
+      bot.SendMessage(channelID, "```" + JSON.stringify(bot.guilds.Get(params[1])[params[2] || "name"], null, 2) + "```")
     }else{
       bot.SendMessage(channelID, "Cached Guilds: " + bot.guilds.length)
     }
    
   }
 
-  if(data.content.includes("*cache-channel")){
-    bot.SendMessage(channelID, "Cached Channels: " + bot.channels.GetArray().length)
+  if(message.includes("*cache-channel")){
+    if(params[1]){
+      bot.SendMessage(channelID, "```" + JSON.stringify(bot.channels.Get(params[1])[params[2] || "name"], null, 2) + "```")
+    }else{
+      bot.SendMessage(channelID, "Cached Channels: " + bot.channels.GetArray().length)
+    }
   }
+
+  if(message.includes("*cache-member")){
+    if(params[1]){
+      bot.SendMessage(channelID, "```" + JSON.stringify(bot.members.Get(params[1])[params[2] || "name"], null, 2) + "```")
+    }else{
+      bot.SendMessage(channelID, "Cached Members: " + bot.members.GetArray().length)
+    }
+  }
+
 })
 
 bot.on("cache_bot_update", (data)=>{

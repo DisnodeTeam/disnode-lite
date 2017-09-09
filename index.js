@@ -188,6 +188,7 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.CHANNEL_CREATE:
         self.emit("channel_create", data.d);
+        self.cache.CacheChannelAdd(data.d);
         break;
         /**
          * Message Delete event.
@@ -197,6 +198,7 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.CHANNEL_DELETE:
         self.emit("channel_delete", data.d);
+        self.cache.CacheChannelRemove(data.d);
         break;
         /**
          * Message Delete event.
@@ -206,6 +208,7 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.CHANNEL_UPDATE:
         self.emit("channel_update", data.d);
+        self.cache.CacheChannelUpdate(data.d);
         break;
         /**
          * Message Delete event.
@@ -292,6 +295,7 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.GUILD_ROLE_DELETE:
         self.emit("guild_role_delete", data.d);
+        self.cache.CacheGuildUpdate(data.d);
         break;
         /**
          * Message Delete event.
@@ -301,6 +305,7 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.GUILD_ROLE_UPDATE:
         self.emit("guild_role_update", data.d);
+        self.cache.CacheGuildUpdate(data.d);
         break;
         /**
          * Message Delete event.
@@ -341,8 +346,8 @@ class Bot extends EventEmitter {
       case codes.dispatch.MESSAGE_DELETE:
         var data = {
           id: data.d.id,
-          channel: data.d.channel_id,
-          guild_id: self.GetGuildIDFromChannel(data.d.channel_id),
+          channelID: data.d.channel_id,
+          guildID: self.GetGuildIDFromChannel(data.d.channel_id),
           raw: data.d
         };
         self.emit("message_delete", data);
