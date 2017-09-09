@@ -9,7 +9,7 @@ if(process.env.INSTID){
 }
 console.log("Sid: " + shardID + " mx: " + maxShards);
 
-var bot = new DisnodeLite({key: "MjYzMzMwMzY5NDA5OTA4NzM2.DHitPg.8IoxMGTSiOUmsbq8-v0fIwrvZ_8", sharding: [shardID,maxShards]});
+var bot = new DisnodeLite({key: "", sharding: [shardID,maxShards]});
 
 var arrayTest = ["test", "test2", "test3"]
 

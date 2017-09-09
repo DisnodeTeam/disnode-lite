@@ -87,17 +87,29 @@ class Bot extends EventEmitter {
         Logger.Success("DisnodeLite-Bot", "ConnectToGateway", "Connected to gateway!");
         resolve();
       });
-
+      self.ws.on('close', function(code, reason){
+        Logger.Error("DisnodeLite-Bot", "WS", "WS closed! Code: " + code + " Reason: " + reason);
+      });
+      self.ws.on('error', function(err){
+        Logger.Error("DisnodeLite-Bot", "WS", "WS error! Error: " + err);
+      });
     });
   }
-
   WSIdentify() {
     var self = this;
     Logger.Info("DisnodeLite-Bot", "wsIdentify", "Sending ID to Gateway");
     var packet = requests.identify(this.key, this.shardID, this.totalShards);
     self.ws.send(JSON.stringify(packet));
   }
-
+  //WIP
+  WSReconnect(){
+    /*
+    var self = this;
+    Logger.Info("DisnodeLite-Bot", "wsIdentify", "Sending ID to Gateway");
+    var packet = requests.identify(this.key, this.shardID, this.totalShards);
+    self.ws.send(JSON.stringify(packet));
+    */
+  }
   StartHeartbeat(interval) {
     var self = this;
     Logger.Info("DisnodeLite-Bot", "StartHeartbeat", "Starting Heatbeat with Interval: " + interval);
