@@ -40,10 +40,10 @@ class Bot extends EventEmitter {
       return;
     }
     
-    this.cache = new Caching()
-    this.guilds   = this.cache.guilds.GetArray();
-    this.channels = this.cache.channels.GetArray();
-    this.members  = this.cache.members.GetArray();
+    this.cache = new Caching(config.cacheSettings || {});
+    this.guilds   = this.cache.guilds;
+    this.channels = this.cache.channels;
+    this.members  = this.cache.members;
     
     this.key = config.key;
     this.botInfo = {};

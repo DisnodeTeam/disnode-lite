@@ -14,8 +14,8 @@ Array.prototype.Set = function(id, val){
     }
 }
 class Cache {
-    constructor(mode = "mem"){
-        this.mode = mode;
+    constructor(config = {}){
+        this.cacheChannels = config.cacheChannels || true;
         this.guilds = [];
         this.channels = [];
         this.members = [];
@@ -26,7 +26,20 @@ class Cache {
         var self = this;
 
         this.guilds.GetArray = function(){return this};
-        this.channels.GetArray = function(){return this};  
+        this.channels.GetArray = function(){
+            if(this.cacheChannels){
+                return this
+            }
+
+            var allArray = [];
+            for(var i=0;i<self.guilds.length;i++){
+                allArray = allArray.concat(self.guilds[i].channels);
+                
+            }
+
+            return allArray;
+            
+        };  
         this.members.GetArray = function(){return this};
         
         
@@ -54,8 +67,8 @@ class Cache {
         console.log(guild)
     }
 
-    CacheGuildMemberAdd(guild){
-
+    CacheGuildMemberAdd(member){
+        this.members.push(member);
     }
 
     CacheGuildMemberRemoved(guild){
@@ -67,7 +80,7 @@ class Cache {
 
         if(!channel){return;}
 
-        if(this.mode !="mem"){return;}
+        if(!this.cacheChannels){return;}
 
         if(Array.isArray(channel)){
             

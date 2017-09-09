@@ -9,7 +9,13 @@ if(process.env.INSTID){
 }
 console.log("Sid: " + shardID + " mx: " + maxShards);
 
-var bot = new DisnodeLite({key: "MTcwMDIwODA3MTk4NjM4MDgw.DJTz2A.ToOIcdKzopRKZq8zCDJHyd_y5ak", sharding: [shardID,maxShards]});
+var bot = new DisnodeLite({
+  key: "", 
+  sharding: [shardID,maxShards],
+  cacheSettings: {
+    cacheChannels: false,
+  }
+});
 
 var arrayTest = ["test", "test2", "test3"]
 
@@ -32,7 +38,7 @@ bot.on("message", (data)=>{
   }
 
   if(data.content.includes("*cache-channel")){
-    bot.SendMessage(data.channel_id, "Cached Channels: " + bot.channels.length)
+    bot.SendMessage(data.channel_id, "Cached Channels: " + bot.channels.GetArray().length)
   }
 })
 
