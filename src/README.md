@@ -6,7 +6,7 @@ Documentation is avalible at https://lite.disnodeteam.com
 
 # Example Bot
 
-```js
+```javascript
 var DisnodeLite = require("disnode-lite");
 
 var shardID = 0;
