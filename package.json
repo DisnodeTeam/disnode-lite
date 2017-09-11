@@ -1,6 +1,6 @@
 {
   "name": "disnode-lite",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A lightweight Discord NodeJS API build from the Disnode Lib. This library only contains the Discord API, a command parser, and functions to communicate with the Disnode Platform.",
   "main": "index.js",
   "scripts": {

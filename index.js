@@ -329,7 +329,7 @@ class Bot extends EventEmitter {
           id: data.id,
           message: data.content,
           content: data.content,
-          user: data.author.user,
+          user: data.author,
           userID: data.author.userID,
           channelID: data.channel_id,
           guildID: self.GetGuildIDFromChannel(data.channel_id),
