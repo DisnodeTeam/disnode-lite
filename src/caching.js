@@ -62,7 +62,7 @@ class Cache {
 	CacheGuildAdd(guild) {
 		if (!guild) { return; }
 		this.guilds.push(guild);
-		this.AttemptChannelCache(guild.channels);
+		this.AttemptChannelCache(guild.channels, guild.id);
 		this.AttemptMemberCache(guild.members);
 	}
 
@@ -147,16 +147,18 @@ class Cache {
 		}
 	}
 
-	AttemptChannelCache(channel) {
+	AttemptChannelCache(channel, guild=null) {
 		var self = this;
 
 		if (!channel) { return; }
 
 		if (!this.cacheChannels) { return; }
-
 		if (Array.isArray(channel)) {
 
 			channel.forEach(function (element) {
+				if(guild!=null){
+					element.guild_id = guild;
+				}
 				self.channels.push(element);
 			}, this);
 		} else {

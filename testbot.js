@@ -26,11 +26,13 @@ bot.on("ready", ()=>{
 })
 
 bot.on("message",({message, channelID})=>{
+  
   var params = message.toString().split(" ");
   if(message.includes("*cache-guilds")){
     
 
     if(params[1]){
+      
       bot.SendMessage(channelID, "```" + JSON.stringify(bot.guilds.Get(params[1])[params[2] || "name"], null, 2) + "```")
     }else{
       bot.SendMessage(channelID, "Cached Guilds: " + bot.guilds.length)
@@ -39,6 +41,7 @@ bot.on("message",({message, channelID})=>{
   }
 
   if(message.includes("*cache-channel")){
+    console.log(bot.channels.Get(params[1]));
     if(params[1]){
       bot.SendMessage(channelID, "```" + JSON.stringify(bot.channels.Get(params[1])[params[2] || "name"], null, 2) + "```")
     }else{

@@ -1180,19 +1180,19 @@ class Bot extends EventEmitter {
    * Get Guild
    * @param {string} guildID - Guild ID
    */
-  GetGuild(guildID) {
-    var self = this;
-    return new Promise(function(resolve, reject) {
-      APIUtil.APIGet(self.key, "guilds/" + guildID)
-        .then(function(data) {
-          resolve(data);
-        })
-        .catch(function(err) {
-          Logger.Error("DisnodeLite-Bot", "GetGuild", err.display);
-          reject(err);
-        });
-    });
-  }
+    GetGuild(guildID) {
+      var self = this;
+      return new Promise(function(resolve, reject) {
+        APIUtil.APIGet(self.key, "guilds/" + guildID)
+          .then(function(data) {
+            resolve(data);
+          })
+          .catch(function(err) {
+            Logger.Error("DisnodeLite-Bot", "GetGuild", err.display);
+            reject(err);
+          });
+      });
+    }
 
   /**
    * Edit Guild
