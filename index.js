@@ -70,7 +70,33 @@ class Bot extends EventEmitter {
       })
     });
   }
+  ReConnectToGateway(url){
+    var self = this;
+    return new Promise(function(resolve, reject) {
+      Logger.Info("DisnodeLite-Bot", "Reconnect", "Reconnecting to gateway");
+      self.wsurl = url;
+      if(self.ws.readyState == codes.wsStatus.OPEN){
+        self.ws.close(1000);
+        Logger.Info("DisnodeLite-Bot", "Reconnect", "CLOSING active connection");
+      }
+      self.ws = new WebSocket(url);
 
+      self.BindSocketEvents();
+
+      self.ws.on('open', function() {
+        Logger.Success("DisnodeLite-Bot", "ConnectToGateway", "Connected to gateway!");
+        resolve();
+      });
+      self.ws.on('close', function(code, reason){
+        Logger.Error("DisnodeLite-Bot", "WS", "WS closed! Code: " + code + " Reason: " + reason);
+        self.ReConnectToGateway(self.wsurl);
+      });
+      self.ws.on('error', function(err){
+        Logger.Error("DisnodeLite-Bot", "WS", "WS error! Error: " + err);
+        self.Connect();
+      });
+    });
+  }
   ConnectToGateway(url) {
     var self = this;
     return new Promise(function(resolve, reject) {
@@ -431,7 +457,7 @@ class Bot extends EventEmitter {
     return new Promise(function(resolve, reject) {
       Logger.Info("DisnodeLite-Bot", "GetGatewayURL", "Aquiring Gatway URL...");
 
-      APIUtil.APIGet(self.key, "gateway/")
+      APIUtil.APIGet(self.key, "gateway/bot")
         .then(function(data) {
           Logger.Success("DisnodeLite-Bot", "GetGatewayURL", "Aquired Gatway URL!");
           var url = data.url + "/?encoding=json&v=6";

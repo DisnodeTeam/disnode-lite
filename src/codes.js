@@ -12,7 +12,12 @@ exports.OPCode = {
   HELLO: 10,
   HEARTBEAT_ACK: 11
 };
-
+exports.wsStatus = {
+  CONNECTING: 0,
+  OPEN: 1,
+  CLOSING: 2,
+  CLOSED: 3
+}
 exports.dispatch = {
   READY: "READY",
   RESUMED: "RESUMED",

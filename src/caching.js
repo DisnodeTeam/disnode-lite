@@ -10,8 +10,10 @@ Array.prototype.Set = function (id, val) {
 	for (var i = 0; i < this.length; i++) {
 		if (this[i].id == id) {
 			this[i] = val;
+			return true;
 		}
 	}
+	return false;
 }
 class Cache {
 	constructor(config = {}) {
@@ -58,7 +60,7 @@ class Cache {
 	//
 
 	//Guilds
-	
+
 	CacheGuildAdd(guild) {
 		if (!guild) { return; }
 		this.guilds.push(guild);
@@ -117,7 +119,7 @@ class Cache {
 		if (Array.isArray(member)) {
 
 			member.forEach(function (element) {
-				
+
 				var flattenedMember = {
 					username: element.user.username,
 					id: element.user.id,
