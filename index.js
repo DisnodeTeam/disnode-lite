@@ -16,7 +16,7 @@ const EventEmitter = require('events').EventEmitter;
 /**
  * Class to ineract with Discord
  * @constructor
- * @param {string} key - Discord Bot Key
+ * @param {object} config - Disnode Config usually just {key:key}
  * @property {string} key - The Bot's Discord Key
  * @property {BotInfoObject} botInfo - Information about the bot
  * @property {Disnode} disnode - Disnode Refrence
@@ -30,21 +30,16 @@ const EventEmitter = require('events').EventEmitter;
 class Bot extends EventEmitter {
   constructor(config) {
     super();
-
-    if(config.enableLogs == false){
-      Logger.DisableLogs();
-    }
-
     if(!config.key){
-      Logger.Error("DisnodeLite-Bot", "constructor", "No Key was Provided in your config. Plz fix that.");
+      Logger.Error("DisnodeLite-Bot", "constructor", "No Key was Provided in your config. Plz fix that. Object passed in should look like {key:\"YourBotTokenHere\"}");
       return;
     }
-    
+
     this.cache = new Caching(config.cacheSettings || {});
     this.guilds   = this.cache.guilds;
     this.channels = this.cache.channels;
     this.members  = this.cache.members;
-    
+
     this.key = config.key;
     this.botInfo = {};
     this.shardID = 0;
@@ -80,6 +75,7 @@ class Bot extends EventEmitter {
     var self = this;
     return new Promise(function(resolve, reject) {
       Logger.Info("DisnodeLite-Bot", "ConnectToGateway", "Connecting to gateway");
+      self.wsurl = url;
       self.ws = new WebSocket(url);
 
       self.BindSocketEvents();
@@ -93,6 +89,7 @@ class Bot extends EventEmitter {
       });
       self.ws.on('error', function(err){
         Logger.Error("DisnodeLite-Bot", "WS", "WS error! Error: " + err);
+        self.Connect();
       });
     });
   }
@@ -103,13 +100,11 @@ class Bot extends EventEmitter {
     self.ws.send(JSON.stringify(packet));
   }
   //WIP
-  WSReconnect(){
-    /*
+  WSResume(){
     var self = this;
-    Logger.Info("DisnodeLite-Bot", "wsIdentify", "Sending ID to Gateway");
-    var packet = requests.identify(this.key, this.shardID, this.totalShards);
+    Logger.Info("DisnodeLite-Bot", "wsResume", "Attempting Resume");
+    var packet = requests.resume(this.key, self.sessionID, self.s);
     self.ws.send(JSON.stringify(packet));
-    */
   }
   StartHeartbeat(interval) {
     var self = this;
@@ -127,9 +122,7 @@ class Bot extends EventEmitter {
     var self = this;
     self.ws.on("message", function(data, flags) {
       self.OnWSMessage(data, flags);
-
     });
-
     self.ws.on('error', function(error) {
       console.log(error);
       var ErrorObject = {
@@ -152,16 +145,19 @@ class Bot extends EventEmitter {
     }
     switch (operation) {
       case codes.OPCode.HELLO:
-
         self.WSIdentify();
         self.StartHeartbeat(data.d['heartbeat_interval'])
         break;
-
       case codes.OPCode.DISPATCH:
         self.HandleDispatch(data);
         break;
       case codes.OPCode.HEARTBEAT_ACK:
 
+        break;
+      case codes.OPCode.RECCONECT:
+        self.ConnectToGateway(self.wsurl).then(function() {
+          self.WSResume();
+        })
         break;
     }
   }
@@ -172,46 +168,49 @@ class Bot extends EventEmitter {
     //console.log(type);
     switch (type) {
       /**
-       * Message Delete event.
+       * Ready event.
        * @event Bot#ready
        * @type {object}
-       * @property {MessageDeleteObject} Data - Indicates whether the snowball is tightly packed.
        */
       case codes.dispatch.READY:
+        self.sessionID = data.d.session_id;
         self.emit("ready");
         break;
-        /**
-         * Message Delete event.
-         * @event Bot#channel_create
-         * @type {object}
-         * @property {MessageDeleteObject} Data - Indicates whether the snowball is tightly packed.
-         */
+      case codes.dispatch.RESUMED:
+        self.emit("resumed");
+        break;
+      /**
+       * Channel Create event.
+       * @event Bot#channel_create
+       * @type {object}
+       * @property {Channel} Data - A channel object
+       */
       case codes.dispatch.CHANNEL_CREATE:
         self.emit("channel_create", data.d);
         self.cache.CacheChannelAdd(data.d);
         break;
         /**
-         * Message Delete event.
+         * Channel Delete event.
          * @event Bot#channel_delete
          * @type {object}
-         * @property {MessageDeleteObject} Data - Indicates whether the snowball is tightly packed.
+         * @property {Channel} Data - A channel object
          */
       case codes.dispatch.CHANNEL_DELETE:
         self.emit("channel_delete", data.d);
         self.cache.CacheChannelRemove(data.d);
         break;
         /**
-         * Message Delete event.
+         * Channel Update event.
          * @event Bot#channel_update
          * @type {object}
-         * @property {MessageDeleteObject} Data - Indicates whether the snowball is tightly packed.
+         * @property {Channel} Data - A channel object
          */
       case codes.dispatch.CHANNEL_UPDATE:
         self.emit("channel_update", data.d);
         self.cache.CacheChannelUpdate(data.d);
         break;
         /**
-         * Message Delete event.
+         * Guild Ban Add event.
          * @event Bot#guild_ban_add
          * @type {object}
          * @property {MessageDeleteObject} Data - Indicates whether the snowball is tightly packed.
@@ -266,7 +265,6 @@ class Bot extends EventEmitter {
       case codes.dispatch.GUILD_MEMBER_ADD:
         self.emit("guild_memeber_add", data.d);
         self.cache.CacheGuildMemberAdd(data.d);
-
         break;
         /**
          * Message Delete event.
@@ -317,7 +315,7 @@ class Bot extends EventEmitter {
         self.emit("guild_update", data.d);
         self.cache.CacheGuildUpdate(data.d);
         break;
-        /** 
+        /**
          * Message Event, Called when your bot recieves a message
          * @event Bot#message
          * @type {object}
@@ -388,7 +386,7 @@ class Bot extends EventEmitter {
          * @type {object}
          * @property {MessageDeleteObject} Data - Indicates whether the snowball is tightly packed.
          */
-      case codes.dispatch.USER_SETTINGS_UPDATE:
+      case codes.dispatch.USER_UPDATE:
         self.emit("setting_update", data.d);
         break;
         /**
@@ -408,13 +406,11 @@ class Bot extends EventEmitter {
         break;
     }
   }
-
   CacheBotUser() {
     var self = this;
     Logger.Info("DisnodeLite-Bot", "GetCacheInfo", "Caching Bot Info.");
 
-    APIUtil.APIGet(self.key, "users/@me")
-      .then(function(data) {
+    APIUtil.APIGet(self.key, "users/@me").then(function(data) {
         Logger.Success("DisnodeLite-Bot", "GetCacheInfo", "Cached Bot Info!")
         self.botInfo = data;
         /**
@@ -430,16 +426,15 @@ class Bot extends EventEmitter {
         reject(err);
       });
   }
-
   GetGatewayURL() {
     var self = this;
     return new Promise(function(resolve, reject) {
       Logger.Info("DisnodeLite-Bot", "GetGatewayURL", "Aquiring Gatway URL...");
 
-      APIUtil.APIGet(self.key, "gateway/bot")
+      APIUtil.APIGet(self.key, "gateway/")
         .then(function(data) {
           Logger.Success("DisnodeLite-Bot", "GetGatewayURL", "Aquired Gatway URL!");
-          var url = data.url + "/?encoding=json&v=5";
+          var url = data.url + "/?encoding=json&v=6";
           resolve(url)
         })
         .catch(function(err) {
@@ -448,7 +443,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Get a channel by an ID
    * @param {string} channelID - ChannelID of where to send the message
@@ -467,7 +461,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Update a Channel
    * @param {string} channelID - ChannelID of where to send the message
@@ -487,7 +480,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Delete a Channel
    * @param {string} channelID - ChannelID of where to send the message
@@ -506,7 +498,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns the messages for a channel.
    * @param {string} channelID - ChannelID of where to send the message
@@ -515,12 +506,10 @@ class Bot extends EventEmitter {
    */
   GetMessages(channelID, settings = {}) {
     var self = this;
-
     return new Promise(function(resolve, reject) {
 
       APIUtil.APIGet(self.key, "/channels/" + channelID + "/messages", settings)
         .then(function(data) {
-
           resolve(data);
         })
         .catch(function(err) {
@@ -530,7 +519,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns a message
    * @param {string} channelID - ChannelID of where to send the message
@@ -550,7 +538,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Send a normal message
    * @param {string} channelID - ChannelID of where to send the message
@@ -560,7 +547,6 @@ class Bot extends EventEmitter {
   SendMessage(channelID, message, tts = false) {
     var self = this;
     return new Promise(function(resolve, reject) {
-
       var msgObject = {
         content: message,
         tts: tts
@@ -657,7 +643,6 @@ class Bot extends EventEmitter {
       });
     });
   }
-
   /**
    * send an embed as a compact one, less lines defining a embed object
    * @param {string} channel - ChannelID of where to send the message
@@ -691,7 +676,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * send an embed as a compact one, less lines defining a embed object
    * @param {string} channel - ChannelID of where to send the message
@@ -727,7 +711,6 @@ class Bot extends EventEmitter {
       });
     });
   }
-
   /**
    * Adds a reaction to a message
    * @param {string} channelID - ChannelID of where to send the message
@@ -754,7 +737,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Deletes Own Reaction
    * @param {string} channelID - ChannelID of where to send the message
@@ -776,7 +758,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Deletes Own Reaction
    * @param {string} channelID - ChannelID of where to send the message
@@ -840,7 +821,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Edit Message
    * @param {string} channelID - ChannelID of where to send the message
@@ -867,7 +847,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Edits a Embed
    * @param {string} channelID - ChannelID of where to send the message
@@ -895,7 +874,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * send an embed as a compact one, less lines defining a embed object
    * @param {string} channelID - ChannelID of the message
@@ -948,8 +926,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
-
   /**
    * Delete mulitple messages
    * @param {string} channelID - ChannelID of the message
@@ -970,7 +946,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Edit the channel permission overwrites for a user or role in a channel.
    * @param {string} channelID - ChannelID of the message
@@ -997,7 +972,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns a list of invite objects (with invite metadata) for the channel. Only usable for guild channels.
    * @param {string} channelID - ChannelID of the message
@@ -1015,7 +989,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns a list of invite objects (with invite metadata) for the channel. Only usable for guild channels.
    * @param {string} channelID - ChannelID of the message
@@ -1034,7 +1007,6 @@ class Bot extends EventEmitter {
         });
     })
   }
-
   /**
    * Delete a channel permission overwrite for a user or role in a channel. Only usable for guild channels.
    * @param {string} channelID - ChannelID of the message
@@ -1053,7 +1025,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Triggers Typing Inidicator
    * @param {string} channelID - ChannelID to start typing in
@@ -1071,7 +1042,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns all pinned messages in the channel as an array of message objects.
    * @param {string} channelID - ChannelID to start typing in
@@ -1089,7 +1059,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Pin a message in a channel.
    * @param {string} channelID - ChannelID to start typing in
@@ -1108,7 +1077,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Delete a pinned message in a channel.
    * @param {string} channelID - ChannelID to start typing in
@@ -1127,7 +1095,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Adds a recipient to a Group DM using their access token
    * @param {string} channelID - ChannelID to start typing in
@@ -1152,7 +1119,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Removes a recipient from a Group DM
    * @param {string} channelID - ChannelID to start typing in
@@ -1175,25 +1141,23 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Get Guild
    * @param {string} guildID - Guild ID
    */
-    GetGuild(guildID) {
-      var self = this;
-      return new Promise(function(resolve, reject) {
-        APIUtil.APIGet(self.key, "guilds/" + guildID)
-          .then(function(data) {
-            resolve(data);
-          })
-          .catch(function(err) {
-            Logger.Error("DisnodeLite-Bot", "GetGuild", err.display);
-            reject(err);
-          });
-      });
-    }
-
+  GetGuild(guildID) {
+    var self = this;
+    return new Promise(function(resolve, reject) {
+      APIUtil.APIGet(self.key, "guilds/" + guildID)
+        .then(function(data) {
+          resolve(data);
+        })
+        .catch(function(err) {
+          Logger.Error("DisnodeLite-Bot", "GetGuild", err.display);
+          reject(err);
+        });
+    });
+  }
   /**
    * Edit Guild
    * @param {string} guildID - Guild to Edit
@@ -1212,7 +1176,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns a list of guild channel objects.
    * @param {string} guildID - Guild to Edit
@@ -1230,7 +1193,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Create a new channel object for the guild.
    * @param {string} guildID - Guild to Edit
@@ -1249,7 +1211,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Modify the positions of a set of channel objects for the guild.
    * @param {string} guildID - Guild to Edit
@@ -1272,7 +1233,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns a guild member object for the specified user.
    * @param {string} guildID - Guild to Edit
@@ -1291,7 +1251,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns a list of guild member objects that are members of the guild.
    * @param {string} guildID - Guild to Edit
@@ -1314,7 +1273,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Edit a guild member
    * @param {string} guildID - Guild to Edit
@@ -1334,8 +1292,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
-
   /**
    * Set username of bot
    * @param {string} guildID - Guild to Edit
@@ -1356,7 +1312,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Adds a role to a memeber
    * @param {string} guildID - Guild to Edit
@@ -1376,7 +1331,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Remove a role to a memeber
    * @param {string} guildID - Guild to Edit
@@ -1396,7 +1350,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Remove a member from a guild.
    * @param {string} guildID - Guild to Edit
@@ -1415,7 +1368,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Gets ban for a guild
    * @param {string} guildID - Guild to Edit
@@ -1433,7 +1385,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Ban a user
    * @param {string} guildID - Guild to Edit
@@ -1455,7 +1406,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Ban a user
    * @param {string} guildID - Guild to Edit
@@ -1474,7 +1424,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Get Guild Roles
    * @param {string} guildID - Guild to Edit
@@ -1492,7 +1441,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Create Guild Role
    * @param {string} guildID - Guild to Edit
@@ -1511,7 +1459,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Edit Role Position
    * @param {string} guildID - Guild to Edit
@@ -1534,7 +1481,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Edit Role
    * @param {string} guildID - Guild to Edit
@@ -1554,7 +1500,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Delete Role
    * @param {string} guildID - Guild to Edit
@@ -1574,7 +1519,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns an object with one 'pruned' key indicating the number of members that would be removed in a prune operation.
    * @param {string} guildID - Guild to Edit
@@ -1592,7 +1536,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Begin a prune operation. Requires the 'KICK_MEMBERS' permission
    * @param {string} guildID - Guild to Edit
@@ -1610,7 +1553,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns a list of voice region objects for the guild.
    * @param {string} guildID - Guild to Edit
@@ -1628,7 +1570,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Returns a list of invite objects (with invite metadata) for the guild
    * @param {string} guildID - Guild to Edit
@@ -1646,7 +1587,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Get Bot user Object
    *
@@ -1664,7 +1604,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Get Bot user Object
    * @param {string} userID - User to retrieve
@@ -1682,7 +1621,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Set the bots status
    * @param {string} status - User to retrieve
@@ -1714,7 +1652,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   GetOrCreateDM(userID) {
     var self = this;
     return new Promise(function(resolve, reject) {
@@ -1730,7 +1667,6 @@ class Bot extends EventEmitter {
         });
     });
   }
-
   /**
    * Gets a guild ID from a ChannelID
    * @param {string} channelID - ChannelID of where to send the message
@@ -1744,6 +1680,5 @@ class Bot extends EventEmitter {
     }
     return _server;
   }
-
 }
 module.exports = Bot;

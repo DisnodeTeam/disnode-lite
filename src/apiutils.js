@@ -18,10 +18,9 @@ exports.APIGet = function (key,endpoint, data=null) {
   return new Promise(function(resolve, reject) {
     var url = DiscordURL + endpoint;
     if(data){
-      
+
       url = DataToParams(url, data)
     }
-
     axios.get(url,{headers: {'Authorization': "Bot " + key}})
     .then(function(response){
       return resolve(response.data);
@@ -33,7 +32,6 @@ exports.APIGet = function (key,endpoint, data=null) {
           status: error.code
         }
       }
-
       var ErrorObject = {
         message: error.response.data.message,
         status: error.response.status,

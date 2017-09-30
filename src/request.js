@@ -4,7 +4,7 @@ exports.identify = function (token, shardID = 0, shardCount = 1) {
     d:{
       "token": token,
       "properties": {
-        "$os": "linux",
+        "$os": process.platform,
         "$browser": "Disnode",
         "$device": "Disnode",
         "$referrer": "",
@@ -15,10 +15,15 @@ exports.identify = function (token, shardID = 0, shardCount = 1) {
       "shard": [shardID, shardCount]}
   }
 };
-
+exports.resume = function(token, sessionID, s) {
+  return {
+    "token": token,
+    "session_id": sessionID,
+    "seq": s
+  }
+};
 
 exports.heartbeat = function (s) {
-
   return{
     "op":1,
     "d": parseInt(s) || null
@@ -29,10 +34,10 @@ exports.presence = function (name) {
   return{
     op:3,
     d:{
-
       "idle_since": null,
       "game":{
         "name": name,
+
       }
     }
   }
