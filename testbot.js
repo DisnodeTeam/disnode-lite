@@ -18,6 +18,18 @@ bot.on("message",(msg)=>{
     console.log(raw);
     bot.SendMessage(msg.channelID, "```json\n" + raw + "\n```");
   }
+
+  if(msg.content.includes( "!voice")){
+    console.log("!!")
+    var params = msg.content.split(" ");
+    console.log(params);
+
+    bot.JoinVoice(msg.guildID, params[1]);
+    setTimeout(function() {
+      bot.SendMessage(msg.channelID,"Joined");
+    }, 4000);
+    //
+  }
 })
 
 bot.on("cache_bot_update", (data)=>{

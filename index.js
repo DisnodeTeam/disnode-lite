@@ -12,7 +12,7 @@ const WebSocket = require('ws');
 const async        = require('async');
 const EventEmitter = require('events').EventEmitter;
 
-
+const VoiceConnection = require("./src/voiceconnection");
 /**
  * Class to ineract with Discord
  * @constructor
@@ -39,7 +39,7 @@ class Bot extends EventEmitter {
     this.guilds   = this.cache.guilds;
     this.channels = this.cache.channels;
     this.members  = this.cache.members;
-
+    this.voiceConnections = {};
     this.key = config.key;
     this.botInfo = {};
     this.shardID = 0;
@@ -423,6 +423,17 @@ class Bot extends EventEmitter {
          */
       case codes.dispatch.VOICE_STATE_UPDATE:
         self.emit("voice_update", data.d);
+        
+        if(data.d.user_id == self.botInfo.id){
+          self.voiceConnections[data.d.guild_id].OnStateUpdate(data.d);
+        }
+
+
+        break;
+        case codes.dispatch.VOICE_SERVER_UPDATE:
+        
+         
+          self.voiceConnections[data.d.guild_id].OnServerUpdate(data.d);
         break;
       case codes.dispatch.MESSAGE_REACTION_ADD:
         self.emit("reaction_add", data.d);
@@ -432,6 +443,7 @@ class Bot extends EventEmitter {
         break;
     }
   }
+  
   CacheBotUser() {
     var self = this;
     Logger.Info("DisnodeLite-Bot", "GetCacheInfo", "Caching Bot Info.");
@@ -467,6 +479,16 @@ class Bot extends EventEmitter {
           Logger.Error("Bot", "GetGatewayURL", "Error Aquiring Gatway URL: " + err.display);
           reject(err);
         });
+    });
+  }
+
+  JoinVoice(guildID, voiceChannelID){
+    var self = this;
+    return new Promise((resolve, reject)=>{
+      var packet = requests.voiceServer(guildID, voiceChannelID);
+      var newVC = new VoiceConnection(guildID, voiceChannelID);
+      self.voiceConnections[guildID] = newVC;
+      self.ws.send(JSON.stringify(packet));
     });
   }
   /**
