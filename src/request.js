@@ -42,3 +42,17 @@ exports.presence = function (name) {
     }
   }
 };
+
+
+exports.voiceServer = function(guildID, channelID) {
+  return {
+    "op": 4,
+    "d": {
+        "guild_id": guildID,
+        "channel_id": channelID,
+        "self_mute": false,
+        "self_deaf": false
+    }
+
+  }
+};
