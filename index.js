@@ -352,7 +352,6 @@ class Bot extends EventEmitter {
         var msgObject = {
           id: data.id,
           message: data.content,
-          content: data.content,
           user: data.author,
           userID: data.author.userID,
           channelID: data.channel_id,

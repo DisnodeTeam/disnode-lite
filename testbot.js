@@ -1,24 +1,22 @@
 var DisnodeLite = require("./index.js");
 var config = require('./config');
-var Argumentor = require("./args")
+var extra = require("disnode-extra");
 var bot = new DisnodeLite({
   key: config.key
 });
-
+console.log(extra);
 
 bot.Connect();
 
 bot.on("ready", ()=>{
   console.log("Ready!");
 })
-
-bot.on("message",(msg)=>{
-  if(msg.message[0] == '%'){
-    var raw = JSON.stringify(Argumentor.ParseMessage(msg.message), null, 2);
-    console.log(raw);
-    bot.SendMessage(msg.channelID, "```json\n" + raw + "\n```");
-  }
-})
+var commander = new extra.Args(bot, "%");
+commander.on("message", (args) =>{
+  var raw = JSON.stringify(args, null, 2);
+  console.log(raw);
+  bot.SendMessage(args.msg.channelID, "```json\n" + raw + "\n```");
+});
 
 bot.on("cache_bot_update", (data)=>{
   console.log(data);
