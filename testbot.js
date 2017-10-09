@@ -11,7 +11,7 @@ bot.Connect();
 bot.on("ready", ()=>{
   console.log("Ready!");
 })
-var commander = new extra.Args(bot, "%");
+var commander = new extra.Params(bot, "aaa");
 commander.on("message", (args) =>{
   var raw = JSON.stringify(args, null, 2);
   console.log(raw);

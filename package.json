@@ -24,7 +24,7 @@
     "async": "^2.5.0",
     "axios": "^0.16.2",
     "cali-db": "0.0.4",
-    "disnode-extra": "^1.0.6",
+    "disnode-extra": "^0.2.3",
     "disnode-logger": "^0.1.1",
     "ink-docstrap": "^1.3.0",
     "ws": "^3.1.0"
